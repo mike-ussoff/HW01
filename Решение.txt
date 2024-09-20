@@ -1,0 +1,64 @@
+1. Требуется перенести таблицу Sales.InvoiceLines базы данных WideWorldImporters в Postgresql
+
+2. Оригинальная структура таблицы 
+CREATE TABLE [Sales].[InvoiceLines](
+	[InvoiceLineID] [int] NOT NULL,
+	[InvoiceID] [int] NOT NULL,
+	[StockItemID] [int] NOT NULL,
+	[Description] [nvarchar](100) NOT NULL,
+	[PackageTypeID] [int] NOT NULL,
+	[Quantity] [int] NOT NULL,
+	[UnitPrice] [decimal](18, 2) NULL,
+	[TaxRate] [decimal](18, 3) NOT NULL,
+	[TaxAmount] [decimal](18, 2) NOT NULL,
+	[LineProfit] [decimal](18, 2) NOT NULL,
+	[ExtendedPrice] [decimal](18, 2) NOT NULL,
+	[LastEditedBy] [int] NOT NULL,
+	[LastEditedWhen] [datetime2](7) NOT NULL,
+ CONSTRAINT [PK_Sales_InvoiceLines] PRIMARY KEY CLUSTERED 
+(
+	[InvoiceLineID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [USERDATA]
+)
+
+3. Экспортируем содержимое таблицы Sales.InvoiceLines в файл c:\temp\Sales.InvoiceLines.csv
+
+EXEC xp_cmdshell 'bcp WideWorldImporters.Sales.InvoiceLines out c:\temp\Sales.InvoiceLines.csv -c -C 65001 -S localhost\SQLEXPRESS -T -a 32767 '
+
+4. Создаем базу данных в Postgresql
+
+createdb WideWorldImporters
+
+5. Схема 
+
+create schema if not exists Sales;
+
+6. Создаем таблицу
+
+drop table if exists Sales.InvoiceLines;
+
+create unlogged table Sales.InvoiceLines (
+	InvoiceLineID int NOT NULL,
+	InvoiceID int NOT NULL,
+	StockItemID int NOT NULL,
+	Description varchar(100) NOT NULL,
+	PackageTypeID int NOT NULL,
+	Quantity int NOT NULL,
+	UnitPrice decimal(18, 2) NULL,
+	TaxRate decimal(18, 3) NOT NULL,
+	TaxAmount decimal(18, 2) NOT NULL,
+	LineProfit decimal(18, 2) NOT NULL,
+	ExtendedPrice decimal(18, 2) NOT NULL,
+	LastEditedBy int NOT NULL,
+	LastEditedWhen timestamp(6) NOT NULL
+)
+
+7. Копируем файл в папку на машине с Postgres и импортируем данные
+
+COPY Sales.InvoiceLines FROM '/home/mikeu/Sales.InvoiceLines.csv' (DELIMITER E'\t', FORMAT CSV);
+
+>COPY 228265
+
+>Query returned successfully in 3 secs 194 msec.
+
+
